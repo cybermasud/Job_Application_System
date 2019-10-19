@@ -6,5 +6,5 @@ removeToken();
 setcookie('remember', null, time() - 3600, '/');
 session_unset();
 session_destroy();
-header('location:../views/Login.views.php');
+header('location:Login.controller.php');
 exit();
