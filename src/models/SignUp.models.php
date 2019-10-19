@@ -14,22 +14,42 @@ function signUp($user_input, $password, $type)
     if ($type === "1") { //type is jobseeker
 
         $user_id = insertUser($user_input['email'], $hashed_password, $user_input['tel'], $type);
-        $education_id = insertEducation($user_input['major'], $user_input['degree'], $user_input['gpa']);
-        insertUserProfile($user_id, $user_input['name'], $user_input['family'], $user_input['gender'], $user_input['birth_date'], $user_input['about'], $education_id, $user_input['birth_place'], $user_input['nationality']);
-
-        insertEmploymentHistory($user_input['company'], $user_input['start_date'], $user_input['end_date'], $user_input['reason'], $user_id);
-
-        insertSkill($user_input['skills'], $user_id);
-
-        insertInterest($user_input['interests'], $user_id);
-
+        if ($user_id === false) {
+            return false;
+        }
+        $status = insertEducation($user_id, $user_input['major'], $user_input['degree'], $user_input['gpa']);
+        if ($status === false) {
+            return false;
+        }
+        $status = insertUserProfile($user_id, $user_input['name'], $user_input['family'], $user_input['gender'], $user_input['birth_date'], $user_input['about'], $user_input['birth_place'], $user_input['nationality']);
+        if ($status === false) {
+            return false;
+        }
+        $status = insertEmploymentHistory($user_input['company'], $user_input['start_date'], $user_input['end_date'], $user_input['reason'], $user_id);
+        if ($status === false) {
+            return false;
+        }
+        $status = insertSkill($user_input['skills'], $user_id);
+        if ($status === false) {
+            return false;
+        }
+        $status = insertInterest($user_input['interests'], $user_id);
+        if ($status === false) {
+            return false;
+        }
     }
     if ($type === "2") { //type is company
 
         $user_id = insertUser($user_input['email'], $hashed_password, $user_input['tel'], $type);
-        insertCompanyProfile($user_id, $user_input['name']);
+        if ($user_id === false) {
+            return false;
+        }
+        $status = insertCompanyProfile($user_id, $user_input['name']);
+        if ($status === false) {
+            return false;
+        }
     }
-    return;
+    return true;
 }
 
 function insertCompanyProfile($user_id, $name)
@@ -41,14 +61,14 @@ function insertCompanyProfile($user_id, $name)
         $result = mysqli_query($connection, $query) or throwException('cant insert company');
 
     } catch (Exception $e) {
-        $_SESSION['signup'] = 'Something get Wrong';
         echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
         var_dump($e->getTrace()[0]);
+        return false;
     } finally {
         mysqli_free_result($result);
     }
 
-    return;
+    return true;
 }
 
 function insertUser($email, $password, $tel, $type)
@@ -59,9 +79,9 @@ function insertUser($email, $password, $tel, $type)
     try {
         $result = mysqli_query($connection, $query) or throwException('cant insert user');
     } catch (Exception $e) {
-        $_SESSION['signup'] = 'Something get Wrong';
         echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
         var_dump($e->getTrace()[0]);
+        return false;
     } finally {
         mysqli_free_result($result);
     }
@@ -69,39 +89,38 @@ function insertUser($email, $password, $tel, $type)
     return $user_id;
 }
 
-function insertEducation($major, $degree, $gpa)
+function insertEducation($user_id, $major, $degree, $gpa)
 {
     global $connection;
 
-    $query = "INSERT INTO `education`(`major_id`, `degree_id`, `GPA`) VALUES ('$major','$degree','$gpa')";
+    $query = "INSERT INTO `education`(`user_id`, `major_id`, `degree_id`, `GPA`) VALUES ($user_id,'$major','$degree','$gpa')";
     try {
         $result = mysqli_query($connection, $query) or throwException('cant insert education');
     } catch (Exception $e) {
-        $_SESSION['signup'] = 'Something get Wrong';
         echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
         var_dump($e->getTrace()[0]);
+        return false;
     } finally {
         mysqli_free_result($result);
     }
-    $education_id = mysqli_insert_id($connection);
-    return $education_id;
+    return true;
 }
 
-function insertUserProfile($user_id, $name, $family, $gender, $birth_date, $about, $education_id, $birth_place, $nationality)
+function insertUserProfile($user_id, $name, $family, $gender, $birth_date, $about, $birth_place, $nationality)
 {
     global $connection;
 
-    $query = "INSERT INTO `user_profile`(`user_id`, `firstname`, `lastname`, `gender`, `birthdate`, `about`, `education_id`, `birthcity_id`, `nationaity_id`) VALUES ('$user_id' ,'$name','$family','$gender','$birth_date','$about','$education_id','$birth_place','$nationality')";
+    $query = "INSERT INTO `user_profile`(`user_id`, `firstname`, `lastname`, `gender`, `birthdate`, `about`, `birthcity_id`, `nationaity_id`) VALUES ('$user_id' ,'$name','$family','$gender','$birth_date','$about','$birth_place','$nationality')";
     try {
         $result = mysqli_query($connection, $query) or throwException('cant insert profile');
     } catch (Exception $e) {
-        $_SESSION['signup'] = 'Something get Wrong';
         echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
         var_dump($e->getTrace()[0]);
+        return false;
     } finally {
         mysqli_free_result($result);
     }
-    return;
+    return true;
 }
 
 /**
@@ -123,9 +142,9 @@ function insertInterest($user_input, $user_id)
             try {
                 mysqli_query($connection, $query) or throwException('cant insert interest');
             } catch (Exception $e) {
-                $_SESSION['signup'] = 'Something get Wrong';
                 echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
                 var_dump($e->getTrace()[0]);
+                return false;
             }
             $interest_ids[] = mysqli_insert_id($connection);
         } else { // value found and creating array of id's
@@ -144,11 +163,11 @@ function insertInterest($user_input, $user_id)
             mysqli_free_result($result);
         } while (mysqli_next_result($connection));
     } catch (Exception $e) {
-        $_SESSION['signup'] = 'Something get Wrong';
         echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
         var_dump($e->getTrace()[0]);
+        return false;
     }
-    return;
+    return true;
 }
 
 function insertSkill($user_input, $user_id)
@@ -165,9 +184,9 @@ function insertSkill($user_input, $user_id)
             try {
                 mysqli_query($connection, $query) or throwException('cant insert skill');
             } catch (Exception $e) {
-                $_SESSION['signup'] = 'Something get Wrong';
                 echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
                 var_dump($e->getTrace()[0]);
+                return false;
             }
             $skill_ids[] = mysqli_insert_id($connection);
         } else { // value found and creating array of id's
@@ -186,11 +205,11 @@ function insertSkill($user_input, $user_id)
             mysqli_free_result($result);
         } while (mysqli_next_result($connection));
     } catch (Exception $e) {
-        $_SESSION['signup'] = 'Something get Wrong';
         echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
         var_dump($e->getTrace()[0]);
+        return false;
     }
-    return;
+    return true;
 
 }
 
@@ -214,9 +233,9 @@ function insertEmploymentHistory($company, $start_date, $end_date, $reason, $use
             mysqli_free_result($result);
         } while (mysqli_next_result($connection));
     } catch (Exception $e) {
-        $_SESSION['signup'] = 'Something get Wrong';
         echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
         var_dump($e->getTrace()[0]);
+        return false;
     }
-    return;
+    return true;
 }
