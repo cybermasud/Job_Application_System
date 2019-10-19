@@ -23,6 +23,7 @@ function login($email, $password)
     }
 
     $_SESSION['user_id'] = $row['id'];
+    $_SESSION['user_type'] = $row['type'];
 
     if (isset($_POST['remember'])) { // setting user cookie
         $rememberToken = generateRandomString();
@@ -48,8 +49,9 @@ function updateToken($rememberToken)
     } catch (Exception $e) {
         echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
         var_dump($e->getTrace()[0]);
+        return false;
     }
-    return;
+    return true;
 
 }
 
@@ -67,6 +69,7 @@ function authenticateUserByCookie()
 
     $user = mysqli_fetch_assoc($result);
     $_SESSION['user_id'] = $user['id'];
+    $_SESSION['user_type'] = $user['type'];
     return;
 }
 
@@ -85,6 +88,7 @@ function removeToken()
     } catch (Exception $e) {
         echo $e->getMessage() . '<br>' . mysqli_error($connection) . '<br>';
         var_dump($e->getTrace()[0]);
+        return false;
     }
-    return;
+    return true;
 }
