@@ -7,7 +7,7 @@ function setInputErrors($user_input, $type)
         $_SESSION['err'][0] = validateName($user_input['name']);
         $_SESSION['err'][1] = validateName($user_input['family']);
         $_SESSION['err'][2] = validateTel($user_input['tel']);
-        $_SESSION['err'][3] = validateEmail($user_input['email']);
+        $_SESSION['err'][3] = validateEmail($user_input['email'], 'sign_up');
         $_SESSION['err'][4] = validateDate($user_input['birth_date']);
         $_SESSION['err'][5] = validateNumber($user_input['nationality']);
         $_SESSION['err'][6] = validateNumber($user_input['birth_place']);
@@ -18,9 +18,9 @@ function setInputErrors($user_input, $type)
         $_SESSION['err'][11] = validateText($user_input['about']);
         $_SESSION['err'][13] = validateText($user_input['interests']);
         $_SESSION['err'][12] = validateText($user_input['skills']);
-        $_SESSION['err'][14]=validateCaptcha($user_input['captcha']);
+        $_SESSION['err'][26] = validateCaptcha($user_input['captcha']);
 
-        $counter = 15; //initializing counter
+        $counter = 14; //initializing counter
         foreach ($user_input['company'] as $key => $value) { //looping employment history
             $_SESSION['err'][$counter] = validateText($value);
             if ($value !== '') {
@@ -34,8 +34,34 @@ function setInputErrors($user_input, $type)
     if ($type === "2") { //company register form
         $_SESSION['err'][0] = validateName($user_input['name']);
         $_SESSION['err'][1] = validateTel($user_input['tel']);
-        $_SESSION['err'][2] = validateEmail($user_input['email']);
-        $_SESSION['err'][3]=validateCaptcha($user_input['captcha']);
+        $_SESSION['err'][2] = validateEmail($user_input['email'], 'sign_up');
+        $_SESSION['err'][3] = validateCaptcha($user_input['captcha']);
+    }
+    if ($type === "3") { //user update form
+        $_SESSION['err'][] = validateName($user_input['name']);
+        $_SESSION['err'][] = validateName($user_input['family']);
+        $_SESSION['err'][] = validateDate($user_input['birth_date']);
+        $_SESSION['err'][] = validateNumber($user_input['nationality']);
+        $_SESSION['err'][] = validateNumber($user_input['birth_place']);
+        $_SESSION['err'][] = validateGender($user_input['gender']);
+        $_SESSION['err'][] = validateNumber($user_input['degree']);
+        $_SESSION['err'][] = validateNumber($user_input['major']);
+        $_SESSION['err'][] = validateGpa($user_input['gpa']);
+        $_SESSION['err'][] = validateText($user_input['about']);
+        $_SESSION['err'][] = validateText($user_input['interests']);
+        $_SESSION['err'][] = validateText($user_input['skills']);
+        $_SESSION['err'][24] = validateCaptcha($user_input['captcha']);
+
+        $counter = 12; //initializing counter
+        foreach ($user_input['company'] as $key => $value) { //looping employment history
+            $_SESSION['err'][$counter] = validateText($value);
+            if ($value !== '') {
+                $_SESSION['err'][($counter + 1)] = validateDate($user_input['start_date'][$key]);
+                $_SESSION['err'][($counter + 2)] = validateDate($user_input['end_date'][$key]);
+                $_SESSION['err'][($counter + 3)] = validateText($user_input['reason'][$key]);
+            }
+            $counter += 4;
+        }
     }
 
 
@@ -72,23 +98,28 @@ function validateTel($data)
     return;
 }
 
-function validateEmail($data)
+function validateEmail($data, $page)
 {
     if ($data === '') {
         $alert = 'Field is Required';
         return $alert;
     }
     if (!preg_match('/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/', $data)) {
-        $alert = 'enter a valid email';
+        $alert = 'Enter a Valid Email';
         return $alert;
     }
-
-    $result = fetchData($data,"users","email");
+    $result = fetchData($data, "users", "email");
     if (mysqli_num_rows($result) > 0) { //email found
-        $alert = 'your Email Exists';
-        return $alert;
+        if ($page === 'sign_up') {
+            $alert = 'your Email Exists';
+            return $alert;
+        }
+        if ($page === 'login') {
+            return true;
+        }
+    } else { //email not found
+        return;
     }
-    return;
 }
 
 function validateDate($data)
@@ -108,7 +139,7 @@ function validateDate($data)
 
 function validateNumber($data)
 {
-    if ($data === null) {
+    if ($data === '') {
         $alert = 'Field is Required';
         return $alert;
     }
