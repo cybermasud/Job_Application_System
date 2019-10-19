@@ -11,7 +11,7 @@ if (isset($_COOKIE['remember']) && !isset($_SESSION['user_id'])) {
 if ($_GET['action'] === 'login') { //checking if user clicked button
     doLogin();
 } else if (isset($_SESSION['user_id'])) { //if user has been logged in go to dashboard
-    header('location:UserDashboard.controller.php');
+    header('location:Dashboard.controller.php');
 } else {
     showForm();
 }
@@ -20,7 +20,7 @@ function showForm()
 {
     $captcha = getCaptcha();
     $image = $captcha();
-    imagepng($image, 'captcha.png'); //image to be sent is png
+    imagepng($image, 'captcha.png'); //saving image
     imagedestroy($image); //clearing cache
     $come_from_controller = true;
     require_once "../views/Login.views.php";
@@ -32,7 +32,12 @@ function doLogin()
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $captcha = $_POST['captcha'] ?? '';
-    if (validateCaptcha($captcha) !='') {
+    $validation_result = validateEmail($email, 'login');
+    if (is_string($validation_result)) {
+        $_SESSION['error'] = $validation_result;
+        showForm();
+    }
+    if (validateCaptcha($captcha) != '') {
         $_SESSION['error'] = 'Captcha is Wrong';
         showForm();
     }
@@ -40,7 +45,7 @@ function doLogin()
         $_SESSION['error'] = 'Email or Password is Incorrect';
         showForm();
     } else {
-        header('location:UserDashboard.controller.php');
+        header('location:Dashboard.controller.php');
         exit();
     }
 
