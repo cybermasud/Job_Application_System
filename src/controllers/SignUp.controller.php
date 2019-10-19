@@ -13,7 +13,7 @@ if ($_GET['type'] === "1" || $_GET['type'] === "2") { //defining user or company
 if ($_GET['action'] === 'register') { //checking if user clicked button
     doRegister($type);
 } else if (isset($_SESSION['user_id'])) { //if user has been logged in go to dashboard
-    header('location:UserDashboard.controller.php');
+    header('location:Dashboard.controller.php');
 } else {
     showForm($type);
 }
@@ -23,7 +23,7 @@ function showForm($type)
     $come_from_controller = true;
     $captcha = getCaptcha();
     $image = $captcha();
-    imagepng($image,'captcha.png'); //image to be sent is png
+    imagepng($image, 'captcha.png'); //saving image
     imagedestroy($image); //clearing cache
     if ($type === "1") {
         $nationality = fetchList('country');
@@ -44,9 +44,11 @@ function doRegister($type)
 
     if ($validation_result === true) {
         $password = generateRandomString(5);
-        signUp($user_input, $password, $type);
-        if (empty($_SESSION['signup'])) {
+        $status = signUp($user_input, $password, $type);
+        if ($status) {
             $_SESSION['signup'] = 'Sign Up Successful' . ' and ' . 'Your Password is ' . $password;
+        } else {
+            $_SESSION['signup'] = 'Something get Wrong';
         }
     }
     showForm($type);
